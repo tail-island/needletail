@@ -1,0 +1,4 @@
+needletail
+*.o
+*.d
+*.s
