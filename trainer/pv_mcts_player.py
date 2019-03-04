@@ -122,6 +122,22 @@ def boltzman(xs, temperature):
     return [x / sum(xs) for x in xs]
 
 
+# def pv_mcts_play(game, evaluate_count, temperature):
+#     def pv_mcts(state, ps_collection):
+#         if state.is_end:
+#             return state, ps_collection
+
+#         scores = pv_mcts_scores(state, evaluate_count)
+#         scores = np.array(scores) / sum(scores)
+
+#         ps = np.zeros(32)
+#         ps[list(state.legal_actions)] = scores
+
+#         return pv_mcts(state.next(np.random.choice(state.legal_actions, p=boltzman(scores, temperature))), ps_collection + (ps,))
+
+#     return pv_mcts(State(game), ())
+
+
 def pv_mcts_play(game, protocol_buffer_path, evaluate_count, temperature):
     def pv_mcts(state, ps_collection):
         if state.is_end:

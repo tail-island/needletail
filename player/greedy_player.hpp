@@ -12,56 +12,16 @@ namespace needletail {
     game  _game;
     float _temperature;
 
-    auto p(needletail::state state, boost::container::static_vector<int, MAX_POINT_SIZE> legal_actions) const noexcept {
-      const auto& scores_1 = [&]() {
-        auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
+    auto probabilities(needletail::state state, boost::container::static_vector<int, MAX_POINT_SIZE> legal_actions) const noexcept {
+      auto result = boost::copy_range<boost::container::static_vector<float, MAX_POINT_SIZE>>(
+        legal_actions |
+        boost::adaptors::transformed(std::function([&](const int& a) { return distance(_game.points()[state.route().back()], _game.points()[a]); })));
 
-        boost::copy(
-          legal_actions |
-          boost::adaptors::transformed([&](const auto& a) { return distance(_game.points()[state.route().back()], _game.points()[a]); }),
-          std::back_inserter(result));
+      boost::transform(result, std::begin(result), [total = boost::accumulate(result, 0.0F)](const auto& s) { return s / total; });
+      boost::transform(result, std::begin(result), [max = *boost::max_element(result)](const auto& s) { return max - s + 0.01F; });
+      boost::transform(result, std::begin(result), [total = boost::accumulate(result, 0.0F)](const auto& s) { return s / total; });
 
-        return result;
-      }();
-
-      const auto& scores_2 = [&]() {
-        auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
-
-        const auto& total = boost::accumulate(scores_1, 0.0F);
-
-        boost::copy(
-          scores_1 |
-          boost::adaptors::transformed([&](const auto& s) { return s / total; }),
-          std::back_inserter(result));
-
-        return result;
-      }();
-
-      const auto& scores_3 = [&]() {
-        auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
-
-        const auto& max = *boost::max_element(scores_2);
-
-        boost::copy(
-          scores_2 |
-          boost::adaptors::transformed([&](const auto& s) { return max - s + 0.01; }),
-          std::back_inserter(result));
-
-        return result;
-      }();
-
-      return [&]() {
-        auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
-
-        const auto& total = boost::accumulate(scores_3, 0.0F);
-
-        boost::copy(
-          scores_3 |
-          boost::adaptors::transformed([&](const auto& s) { return s / total; }),
-          std::back_inserter(result));
-
-        return result;
-      }();
+      return result;
     }
 
     auto greedy(needletail::state state) const noexcept {
@@ -71,10 +31,7 @@ namespace needletail {
 
       const auto& legal_actions = state.legal_actions();
 
-      const auto& p_1 = greedy_play::p(state, legal_actions);
-      const auto& p_2 = boltzman(p_1, _temperature);
-
-      return greedy(state.next(legal_actions[std::distance(std::begin(p_2), boost::max_element(p_2))]));
+      return greedy(state.next(*choice(legal_actions, boltzman(probabilities(state, legal_actions), _temperature))));
     }
 
   public:

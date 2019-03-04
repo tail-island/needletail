@@ -49,18 +49,13 @@ namespace needletail {
   };
 
   auto random_game() noexcept {
-    auto points = [&]() {
-      auto result = boost::container::static_vector<point, MAX_POINT_SIZE>();
-
+    const auto& points = [&]() {
       auto random_engine       = std::default_random_engine(std::random_device()());
       auto random_distribution = std::uniform_int_distribution<>(0, 128);
 
-      boost::copy(
+      return boost::copy_range<boost::container::static_vector<point, MAX_POINT_SIZE>>(
         boost::irange(0, 8) |
-        boost::adaptors::transformed([&](const auto& _) { return point(random_distribution(random_engine), random_distribution(random_engine)); }),
-        std::back_inserter(result));
-
-      return result;
+        boost::adaptors::transformed(std::function([&](const int& _) { return point(random_distribution(random_engine), random_distribution(random_engine)); })));
     }();
 
     return game(points);
@@ -80,14 +75,9 @@ namespace needletail {
     }
 
     auto legal_actions() const noexcept {
-      auto result = boost::container::static_vector<int, MAX_POINT_SIZE>();
-
-      boost::copy(
+      return boost::copy_range<boost::container::static_vector<int, MAX_POINT_SIZE>>(
         boost::irange(0, static_cast<int>(_game.points().size())) |
-        boost::adaptors::filtered([&](const auto& i) { return boost::find(_route, i) == std::end(_route); }),
-        std::back_inserter(result));
-
-      return result;
+        boost::adaptors::filtered(std::function([&](const int& i) { return boost::find(_route, i) == std::end(_route); })));
     }
 
     const auto& route() const noexcept {

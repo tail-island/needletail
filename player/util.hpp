@@ -1,53 +1,48 @@
 #pragma once
 
-#include <boost/container/static_vector.hpp>
+#include <random>
+
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm.hpp>
+#include <boost/range/irange.hpp>
 #include <boost/range/numeric.hpp>
 
 #include "game.hpp"
 
 namespace needletail {
-  boost::container::static_vector<float, MAX_POINT_SIZE> one_hot(size_t size, size_t v) noexcept {
-    auto result = boost::container::static_vector<float, MAX_POINT_SIZE>(size);
+  template<class T, class U = typename T::value_type>
+  inline T boltzman(const T& xs, float temperature) noexcept {
+    if (temperature == 0) {
+      return boost::copy_range<T>(
+        boost::irange(static_cast<size_t>(0), xs.size()) |
+        boost::adaptors::transformed(std::function([index = std::distance(std::begin(xs), boost::max_element(xs))](const float& i) { return i == index ? 1.0 : 0.0; })));
+    }
 
-    result[v] = 1.0;
+    auto result = boost::copy_range<T>(
+      xs |
+      boost::adaptors::transformed(std::function([&](const U& x) { return pow(x, 1.0F / temperature); })));
+
+    boost::transform(result, std::begin(result), [total = boost::accumulate(result, 0.0F)](const U& x) { return x / total; });
 
     return result;
   }
 
-  boost::container::static_vector<float, MAX_POINT_SIZE> boltzman(const boost::container::static_vector<float, MAX_POINT_SIZE>& xs, float temperature) noexcept {
-    if (temperature == 0) {
-      return one_hot(xs.size(), std::distance(std::begin(xs), boost::max_element(xs)));
+  template<class T, class U, class V = typename T::const_iterator>
+  inline V choice(const T& xs, const U& probabilities) noexcept {
+    auto random_engine       = std::default_random_engine(std::random_device()());
+    auto random_distribution = std::uniform_real_distribution<float>(0, 1);
+
+    const auto& threshold = random_distribution(random_engine);
+    auto total = 0.0f;
+
+    for (auto it_1 = std::begin(xs), it_2 = std::begin(probabilities); it_1 != std::end(xs); ++it_1, ++it_2) {
+      if (total < threshold && threshold <= total + *it_2) {
+        return it_1;
+      }
+
+      total += *it_2;
     }
 
-    auto xs_1 = [&]() {
-      auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
-
-      boost::copy(
-        xs |
-        boost::adaptors::transformed([&](const auto& x) { return pow(x, 1.0F / temperature); }),
-        std::back_inserter(result));
-
-      return result;
-    }();
-
-    return [&]() {
-      auto result = boost::container::static_vector<float, MAX_POINT_SIZE>();
-
-      const auto& total = boost::accumulate(xs_1, 0.0F);
-
-      boost::copy(
-        xs_1 |
-        boost::adaptors::transformed([&](const auto& x) { return x / total; }),
-        std::back_inserter(result));
-
-      return result;
-    }();
-  }
-
-  template<typename T>
-  T::const_iterator choice(const T& xs, const boost::conatiner::static_vector<float, MAX_POINT_SIZE>& p) noexcept {
-
+    return --std::end(xs);
   }
 }

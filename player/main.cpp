@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
   auto g = needletail::random_game();
 
   {
-    auto p = needletail::greedy_play(g, 1.0);
+    auto p = needletail::greedy_play(g, 0.0);
     auto s = p();
     for (auto i: s.route()) {
       std::cout << i << std::endl;
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   }
 
   {
-    auto p = needletail::greedy_play(g, 1.0);
+    auto p = needletail::greedy_play(g, 0.1);
     auto s = p();
     for (auto i: s.route()) {
       std::cout << i << std::endl;
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   }
 
   {
-    auto p = needletail::greedy_play(g, 1.0);
+    auto p = needletail::greedy_play(g, 0.2);
     auto s = p();
     for (auto i: s.route()) {
       std::cout << i << std::endl;
