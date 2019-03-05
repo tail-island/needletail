@@ -1,6 +1,9 @@
 #pragma once
 
+#include <condition_variable>
+#include <mutex>
 #include <random>
+#include <queue>
 
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm.hpp>
@@ -45,4 +48,42 @@ namespace needletail {
 
     return --std::end(xs);
   }
+
+  template<class T>
+  class blocking_queue {
+    std::queue<T>           _queue;
+    std::mutex              _mutex;
+    std::condition_variable _condition;
+
+  public:
+    blocking_queue() noexcept: _queue(), _mutex(), _condition() {
+      ;
+    }
+
+    auto enqueue(const T& x) noexcept {
+      auto lock = std::unique_lock(_mutex);
+
+      const auto& need_to_notify = std::empty(_queue);
+
+      _queue.emplace(x);
+
+      if (need_to_notify) {
+        _condition.notify_one();
+      }
+    }
+
+    auto dequeue() noexcept {
+      auto lock = std::unique_lock(_mutex);
+
+      if (std::empty(_queue)) {
+        _condition.wait(lock);
+      }
+
+      auto result = _queue.front();
+
+      _queue.pop();
+
+      return result;
+    }
+  };
 }

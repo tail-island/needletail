@@ -11,7 +11,7 @@
 #include <boost/range/numeric.hpp>
 
 namespace needletail {
-  const int MAX_POINT_SIZE = 32;
+  constexpr int MAX_POINT_SIZE = 32;
 
   class point final {
     int _y;
@@ -51,7 +51,7 @@ namespace needletail {
   auto random_game() noexcept {
     const auto& points = [&]() {
       auto random_engine       = std::default_random_engine(std::random_device()());
-      auto random_distribution = std::uniform_int_distribution<>(0, 128);
+      auto random_distribution = std::uniform_int_distribution<>(0, 127);
 
       return boost::copy_range<boost::container::static_vector<point, MAX_POINT_SIZE>>(
         boost::irange(0, 8) |
@@ -62,7 +62,7 @@ namespace needletail {
   }
 
   class state final {
-    game                                                 _game;
+    needletail::game                                     _game;
     boost::container::static_vector<int, MAX_POINT_SIZE> _route;
 
   public:
@@ -78,6 +78,10 @@ namespace needletail {
       return boost::copy_range<boost::container::static_vector<int, MAX_POINT_SIZE>>(
         boost::irange(0, static_cast<int>(_game.points().size())) |
         boost::adaptors::filtered(std::function([&](const int& i) { return boost::find(_route, i) == std::end(_route); })));
+    }
+
+    const auto& game() const noexcept {
+      return _game;
     }
 
     const auto& route() const noexcept {

@@ -12,7 +12,7 @@
 
 namespace needletail {
   template<int BATCH_SIZE>
-  class predict final {
+  class tf_predict final {
     TF_Graph*                 _graph;
     TF_Session*               _session;
 
@@ -110,7 +110,7 @@ namespace needletail {
     }
 
   public:
-    predict(const std::string& model_path):
+    tf_predict(const std::string& model_path):
       _graph(create_graph(model_path)),
       _session(create_session(_graph)),
       _x_tensor(create_x_tensor()),
@@ -123,7 +123,7 @@ namespace needletail {
       ;
     }
 
-    ~predict() {
+    ~tf_predict() {
       TF_DeleteSession(_session, _status);
       TF_DeleteGraph(_graph);
       TF_DeleteTensor(_x_tensor);

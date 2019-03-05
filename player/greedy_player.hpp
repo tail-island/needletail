@@ -35,11 +35,11 @@ namespace needletail {
     }
 
   public:
-    greedy_play(needletail::game game, float temperature): _game(game), _temperature(temperature) {
+    greedy_play(needletail::game game, float temperature) noexcept: _game(game), _temperature(temperature) {
       ;
     }
 
-    auto operator()() {
+    auto operator()() noexcept {
       return greedy(state(_game));
     }
   };
